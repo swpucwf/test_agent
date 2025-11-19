@@ -55,6 +55,13 @@ export interface KnowledgeSearchResult {
   score: number;
 }
 
+export interface KnowledgeAiSuggestionResponse {
+  suggestion: KnowledgeItem;
+  reasoning?: string;
+  improvements?: string[];
+  confidence?: number;
+}
+
 // 知识库统计
 export interface KnowledgeStats {
   totalKnowledge: number;
@@ -176,6 +183,25 @@ class KnowledgeService {
       headers: getAuthHeaders(),
       body: JSON.stringify(params)
     });
+    return handleResponse(response);
+  }
+
+  /**
+   * 调用AI生成知识建议
+   */
+  async generateKnowledgeSuggestion(params: {
+    description: string;
+    systemName?: string;
+    category?: string;
+    businessDomain?: string;
+    partialFields?: Partial<KnowledgeItem>;
+  }): Promise<KnowledgeAiSuggestionResponse> {
+    const response = await fetch(`${API_BASE_URL}/assist/generate`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(params)
+    });
+
     return handleResponse(response);
   }
 

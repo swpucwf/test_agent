@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
+  Alert,
   Card,
   Table,
   Button,
@@ -65,6 +66,19 @@ const KnowledgeManagement: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [testSearchVisible, setTestSearchVisible] = useState(false);
+  const [aiDescription, setAiDescription] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiInsights, setAiInsights] = useState<{
+    reasoning?: string;
+    improvements?: string[];
+    confidence?: number;
+  } | null>(null);
+
+  const resetAiAssistant = () => {
+    setAiDescription('');
+    setAiInsights(null);
+    setAiGenerating(false);
+  };
 
   // 加载系统列表
   useEffect(() => {
@@ -157,6 +171,7 @@ const KnowledgeManagement: React.FC = () => {
   const handleAdd = () => {
     setEditingKnowledge(null);
     form.resetFields();
+    resetAiAssistant();
     setModalVisible(true);
   };
 
@@ -166,7 +181,13 @@ const KnowledgeManagement: React.FC = () => {
       ...knowledge,
       tags: knowledge.tags.join(', ')
     });
+    resetAiAssistant();
     setModalVisible(true);
+  };
+
+  const handleModalCancel = () => {
+    setModalVisible(false);
+    resetAiAssistant();
   };
 
   const handleSave = async () => {
@@ -198,7 +219,7 @@ const KnowledgeManagement: React.FC = () => {
 
       await knowledgeService.addKnowledge(selectedSystem, knowledge);
       message.success(editingKnowledge ? '更新成功' : '添加成功');
-      setModalVisible(false);
+      handleModalCancel();
       loadKnowledgeAndStats();
     } catch (error: any) {
       if (error.errorFields) {
@@ -207,6 +228,84 @@ const KnowledgeManagement: React.FC = () => {
         message.error('保存失败: ' + (error.message || '未知错误'));
         console.error(error);
       }
+    }
+  };
+
+  const handleGenerateWithAI = async () => {
+    if (!aiDescription.trim()) {
+      message.warning('请输入AI描述内容');
+      return;
+    }
+
+    if (!selectedSystem) {
+      message.warning('请先选择系统');
+      return;
+    }
+
+    const currentValues = form.getFieldsValue();
+    const partialFields: Partial<KnowledgeItem> = {};
+
+    if (currentValues.category) partialFields.category = currentValues.category;
+    if (currentValues.title) partialFields.title = currentValues.title;
+    if (currentValues.content) partialFields.content = currentValues.content;
+    if (currentValues.businessDomain) partialFields.businessDomain = currentValues.businessDomain;
+
+    if (currentValues.tags) {
+      if (Array.isArray(currentValues.tags)) {
+        partialFields.tags = currentValues.tags;
+      } else if (typeof currentValues.tags === 'string') {
+        partialFields.tags = currentValues.tags
+          .split(',')
+          .map((tag: string) => tag.trim())
+          .filter((tag: string) => tag.length > 0);
+      }
+    }
+
+    if (currentValues.metadata) {
+      if (typeof currentValues.metadata === 'string') {
+        try {
+          partialFields.metadata = JSON.parse(currentValues.metadata);
+        } catch (error) {
+          console.warn('Metadata 解析失败，传递原始字符串', error);
+          partialFields.metadata = currentValues.metadata;
+        }
+      } else {
+        partialFields.metadata = currentValues.metadata;
+      }
+    }
+
+    setAiGenerating(true);
+    try {
+      const result = await knowledgeService.generateKnowledgeSuggestion({
+        description: aiDescription,
+        systemName: selectedSystem,
+        category: currentValues.category,
+        businessDomain: currentValues.businessDomain,
+        partialFields: Object.keys(partialFields).length > 0 ? partialFields : undefined
+      });
+
+      const suggestion = result.suggestion;
+      form.setFieldsValue({
+        category: suggestion.category,
+        title: suggestion.title,
+        content: suggestion.content,
+        businessDomain: suggestion.businessDomain,
+        tags: suggestion.tags.join(', '),
+        metadata: suggestion.metadata ? JSON.stringify(suggestion.metadata, null, 2) : ''
+      });
+
+      setAiInsights({
+        reasoning: result.reasoning,
+        improvements: result.improvements,
+        confidence: result.confidence
+      });
+
+      message.success('AI已生成建议，请确认后保存');
+    } catch (error: any) {
+      message.error(error?.message || 'AI生成失败，请稍后重试');
+      console.error(error);
+    } finally {
+      setAiGenerating(false);
     }
   };
 
@@ -496,10 +595,74 @@ const KnowledgeManagement: React.FC = () => {
         title={editingKnowledge ? '编辑知识' : '添加知识'}
         open={modalVisible}
         onOk={handleSave}
-        onCancel={() => setModalVisible(false)}
+        onCancel={handleModalCancel}
         width={800}
         destroyOnClose
       >
+        <Card
+          size="small"
+          bordered={false}
+          style={{ marginBottom: 16, background: '#fafafa' }}
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 500 }}>AI智能补全</span>
+              <Button
+                type="link"
+                size="small"
+                disabled={(!aiDescription && !aiInsights) || aiGenerating}
+                onClick={resetAiAssistant}
+                style={{ padding: 0 }}
+              >
+                清空
+              </Button>
+            </div>
+            <TextArea
+              rows={3}
+              value={aiDescription}
+              onChange={e => setAiDescription(e.target.value)}
+              placeholder="描述你想新增的知识点，越具体越能生成符合Qdrant检索的数据，如场景、触发条件、风险、处理策略等"
+            />
+            <Space align="baseline" size="middle">
+              <Button
+                type="primary"
+                icon={<BulbOutlined />}
+                loading={aiGenerating}
+                onClick={handleGenerateWithAI}
+                disabled={aiGenerating || !aiDescription.trim()}
+              >
+                生成建议
+              </Button>
+              <span style={{ color: '#666', fontSize: 12 }}>
+                描述越详细，生成的知识越贴合向量检索；生成后请人工确认再保存。
+              </span>
+            </Space>
+            {aiInsights && (
+              <Alert
+                type="info"
+                showIcon
+                message={`AI建议${typeof aiInsights.confidence === 'number' ? ` · 置信度 ${(aiInsights.confidence * 100).toFixed(0)}%` : ''}`}
+                description={
+                  <div>
+                    {aiInsights.reasoning && (
+                      <div style={{ marginBottom: aiInsights.improvements && aiInsights.improvements.length > 0 ? 8 : 0 }}>
+                        {aiInsights.reasoning}
+                      </div>
+                    )}
+                    {aiInsights.improvements && aiInsights.improvements.length > 0 && (
+                      <ul style={{ paddingLeft: 20, marginBottom: 0 }}>
+                        {aiInsights.improvements.map((tip, index) => (
+                          <li key={index}>{tip}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                }
+              />
+            )}
+          </Space>
+        </Card>
+
         <Form
           form={form}
           layout="vertical"

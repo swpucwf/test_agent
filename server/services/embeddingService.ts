@@ -1,5 +1,8 @@
 import { PrismaClient } from '../../src/generated/prisma/index.js';
 
+const RELEVANCE_SCORE_THRESHOLD = 0.3;   // 只把相似度至少30%的候选交给AI做下一步处理
+const FALLBACK_RECALL_RATIO = 0.6;       // 阈值命中太少时回退召回约60%的候选集
+
 export interface TestCaseFilters {
   system?: string;
   module?: string;
@@ -16,6 +19,8 @@ export interface TestCase {
   system?: string;
   module?: string;
   created_at?: Date;
+  relevance_score?: number;
+  recall_reason?: string;
 }
 
 export interface RelevanceResult {
@@ -89,8 +94,28 @@ export class EmbeddingService {
         return [];
       }
 
-      // 🔥 跳过语义筛选，直接将所有候选用例交给AI处理（更智能准确）
-      const relevantCases = candidateCases;
+      const relevanceRankedCases = await this.filterByRelevance(
+        candidateCases,
+        filters.changeBrief
+      );
+
+      const thresholdCases = relevanceRankedCases.filter(
+        testCase => (testCase.relevance_score ?? 0) >= RELEVANCE_SCORE_THRESHOLD
+      );
+
+      let relevantCases = thresholdCases;
+
+      if (relevantCases.length === 0) {
+        const fallbackCount = Math.max(
+          1,
+          Math.ceil(candidateCases.length * FALLBACK_RECALL_RATIO)
+        );
+
+        relevantCases = relevanceRankedCases.slice(0, fallbackCount);
+        console.log(
+          `⚖️ [EmbeddingService] 未命中相关性阈值，按 ${FALLBACK_RECALL_RATIO * 100}% 召回回退到 ${relevantCases.length} 个候选`
+        );
+      }
 
       console.log(`✅ [EmbeddingService] 最终筛选出 ${relevantCases.length} 个相关用例`);
 
@@ -101,7 +126,9 @@ export class EmbeddingService {
         tags: c.tags,
         system: c.system,
         module: c.module,
-        created_at: c.created_at
+        created_at: c.created_at,
+        relevance_score: c.relevance_score,
+        recall_reason: c.recall_reason
       }));
 
     } catch (error: any) {

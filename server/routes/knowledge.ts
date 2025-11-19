@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { KnowledgeManagementService } from '../services/knowledgeManagementService.js';
 import multer from 'multer';
+import { knowledgeAiAssistantService } from '../services/knowledgeAiAssistantService.js';
+import type { KnowledgeItem } from '../services/testCaseKnowledgeBase.js';
 
 const router = express.Router();
 const knowledgeService = new KnowledgeManagementService();
@@ -109,6 +111,85 @@ router.post('/test-search', async (req: Request, res: Response) => {
     res.status(500).json({
       error: '测试搜索失败',
       message: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/knowledge/assist/generate
+ * 调用AI生成知识建议
+ */
+router.post('/assist/generate', async (req: Request, res: Response) => {
+  try {
+    const {
+      description,
+      systemName,
+      category,
+      businessDomain,
+      partialFields
+    } = req.body || {};
+
+    if (!description || typeof description !== 'string' || description.trim().length === 0) {
+      return res.status(400).json({ error: '描述内容不能为空' });
+    }
+
+    let sanitizedPartial: Partial<KnowledgeItem> | undefined;
+    if (partialFields && typeof partialFields === 'object') {
+      sanitizedPartial = {};
+      if (typeof partialFields.category === 'string') {
+        sanitizedPartial.category = partialFields.category as KnowledgeItem['category'];
+      }
+      if (typeof partialFields.title === 'string') {
+        sanitizedPartial.title = partialFields.title;
+      }
+      if (typeof partialFields.content === 'string') {
+        sanitizedPartial.content = partialFields.content;
+      }
+      if (typeof partialFields.businessDomain === 'string') {
+        sanitizedPartial.businessDomain = partialFields.businessDomain;
+      }
+      if (Array.isArray(partialFields.tags)) {
+        sanitizedPartial.tags = partialFields.tags.map((tag: unknown) => String(tag));
+      } else if (typeof partialFields.tags === 'string') {
+        sanitizedPartial.tags = partialFields.tags
+          .split(',')
+          .map((tag: string) => tag.trim())
+          .filter(tag => tag.length > 0);
+      }
+      if (partialFields.metadata) {
+        if (typeof partialFields.metadata === 'object') {
+          sanitizedPartial.metadata = partialFields.metadata;
+        } else if (typeof partialFields.metadata === 'string') {
+          try {
+            sanitizedPartial.metadata = JSON.parse(partialFields.metadata);
+          } catch (error) {
+            console.warn('解析partial metadata失败，忽略该字段:', error);
+          }
+        }
+      }
+    }
+
+    const result = await knowledgeAiAssistantService.generateSuggestion({
+      description,
+      systemName,
+      preferredCategory: category,
+      preferredDomain: businessDomain,
+      partialFields: sanitizedPartial
+    });
+
+    return res.json({
+      ok: true,
+      suggestion: result.suggestion,
+      reasoning: result.reasoning,
+      improvements: result.improvements,
+      confidence: result.confidence
+    });
+  } catch (error) {
+    console.error('AI辅助生成知识失败:', error);
+    const message = error instanceof Error ? error.message : '未知错误';
+    return res.status(500).json({
+      error: 'AI生成失败',
+      message
     });
   }
 });

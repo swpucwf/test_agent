@@ -39,6 +39,10 @@ DEFAULT_MAX_TOKENS=4000
 GEMINI_LOCAL_BASE_URL=http://localhost:3000/v1
 GEMINI_LOCAL_API_KEY=your_local_api_key_here
 
+# 本地 Qwen API 配置 (可选)
+QWEN_LOCAL_BASE_URL=http://localhost:3000/openai-qwen-oauth/v1
+QWEN_LOCAL_API_KEY=your_qwen_api_key_here
+
 # 代理配置 (可选)
 HTTP_PROXY=http://127.0.0.1:10808
 HTTPS_PROXY=http://127.0.0.1:10808
@@ -134,6 +138,41 @@ LOG_FULL_PROMPT=false              # 是否记录完整 AI Prompt
 | `GEMINI_LOCAL_API_KEY` | 本地 API 密钥 | your_api_key |
 
 **使用场景**：本地部署的 Gemini 2.5 Flash 模型，支持离线使用。
+
+### 本地 Qwen API 配置
+
+| 配置项 | 说明 | 示例 |
+|-------|------|------|
+| `QWEN_LOCAL_BASE_URL` | Qwen Turbo 本地 API 地址 | http://localhost:3000/openai-qwen-oauth/v1 |
+| `QWEN_LOCAL_API_KEY` | Qwen 本地 API 密钥 | your_qwen_api_key |
+
+**使用场景**：本地部署的 Qwen Turbo 模型，兼容 OpenAI 与 Claude 协议，可在设置页与 Gemini 一样一键切换。
+
+**请求示例（OpenAI 兼容协议）**：
+
+```bash
+curl http://localhost:3000/openai-qwen-oauth/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${QWEN_LOCAL_API_KEY}" \
+  -d '{
+    "model": "qwen-turbo",
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "max_tokens": 1000
+  }'
+```
+
+**请求示例（Claude 兼容协议）**：
+
+```bash
+curl http://localhost:3000/openai-qwen-oauth/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ${QWEN_LOCAL_API_KEY}" \
+  -d '{
+    "model": "qwen-turbo",
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "max_tokens": 1000
+  }'
+```
 
 ### 代理配置
 

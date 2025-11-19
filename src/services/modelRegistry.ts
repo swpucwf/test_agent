@@ -76,6 +76,21 @@ export class ModelRegistry {
         capabilities: ['text-generation', 'multimodal', 'reasoning', 'code-analysis', 'image-understanding', 'audio-understanding'],
         description: '本地部署的 Gemini 2.5 Flash 模型，支持文本、图片、音频多模态输入',
         costLevel: 'low'
+      },
+      {
+        id: 'qwen-turbo-local',
+        name: 'Qwen Turbo (Local)',
+        provider: 'Qwen (Local)',
+        openRouterModel: 'qwen3-coder-plus',
+        customBaseUrl: 'http://localhost:3000/openai-qwen-oauth/v1',
+        requiresCustomAuth: true,
+        defaultConfig: {
+          temperature: 0.3,
+          maxTokens: 1000
+        },
+        capabilities: ['text-generation', 'reasoning', 'code-analysis', 'chinese-friendly'],
+        description: '本地部署�?Qwen Turbo 模型，兼容 OpenAI / Claude 请求协议，中文场景友好',
+        costLevel: 'low'
       }
     ];
   }

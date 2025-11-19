@@ -126,6 +126,10 @@ DEFAULT_MAX_TOKENS=4000
 GEMINI_LOCAL_BASE_URL=http://localhost:3000/v1
 GEMINI_LOCAL_API_KEY=your_local_api_key_here
 
+# 本地 Qwen API 配置 (可选)
+QWEN_LOCAL_BASE_URL=http://localhost:3000/openai-qwen-oauth/v1
+QWEN_LOCAL_API_KEY=your_qwen_api_key_here
+
 # 代理配置 (可选)
 HTTP_PROXY=http://127.0.0.1:10808
 HTTPS_PROXY=http://127.0.0.1:10808

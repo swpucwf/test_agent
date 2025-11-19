@@ -182,51 +182,6 @@ Playwright 浏览器自动化
 | **灵活性** | 高 | 低（无法修改录制脚本） | **高** 🔧 |
 | **元素定位** | 手动写选择器 | 固定坐标/选择器 | **AI 智能匹配** 🤖 |
 
-[查看执行详解](docs/EXECUTION.md)
-
----
-
-## 🚀 快速开始
-
-### 一键启动（推荐）
-
-```bash
-# 克隆项目
-git clone https://github.com/testflow/testflow.git
-cd testflow
-
-# 一键启动（自动安装依赖、配置环境、启动服务）
-npm start
-```
-
-### 访问系统
-
-```
-前端: http://localhost:5173
-默认账号: admin / admin
-```
-
-### 可选：启用 RAG 知识库
-
-```bash
-# 启动 Qdrant 向量数据库
-docker run -d -p 6333:6333 qdrant/qdrant
-
-# 配置 .env 文件
-QDRANT_URL=http://localhost:6333
-EMBEDDING_PROVIDER=aliyun
-EMBEDDING_API_KEY=your_aliyun_api_key
-
-# 重启服务
-npm run dev
-```
-
-详细安装指南：[INSTALLATION.md](docs/INSTALLATION.md)
-
----
-
-## 🎮 使用指南
-
 ### 1. AI 生成测试用例
 
 ```
@@ -258,7 +213,7 @@ npm run dev
 | **前端** | React 18 + TypeScript + Tailwind CSS | 现代化 UI |
 | **后端** | Node.js + Express + Prisma ORM | API 服务 |
 | **数据库** | MySQL 8.0 | 关系型数据库 |
-| **AI** | OpenRouter (GPT-4o/DeepSeek/Claude/Gemini) | 多模型支持 |
+| **AI** | OpenRouter (GPT-4o/DeepSeek/Claude) + 本地 Gemini/Qwen | 多模型支持 |
 | **RAG** | Qdrant + 阿里通义 Embedding (1024 维) | 知识库增强 |
 | **自动化** | MCP + Playwright | 浏览器自动化 |
 | **实时通信** | WebSocket | 进度推送 |
