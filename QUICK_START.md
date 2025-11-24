@@ -6,8 +6,8 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/testflow.git
-cd testflow
+git clone https://github.com/swpucwf/test_agent.git
+cd test_agent
 
 # 2. 安装依赖
 npm install
@@ -85,5 +85,5 @@ npm start
 ## 更多帮助
 
 - 📖 [完整安装指南](docs/INSTALLATION.md)
-- 🐛 [问题反馈](https://github.com/your-username/testflow/issues)
-- 💬 [讨论区](https://github.com/your-username/testflow/discussions)
+- 🐛 [问题反馈](https://github.com/swpucwf/test_agent/issues)
+- 💬 [讨论区](https://github.com/swpucwf/test_agent/discussions)

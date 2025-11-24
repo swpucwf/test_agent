@@ -4,11 +4,11 @@
 
 **从 Axure 原型 10 分钟生成测试用例，用自然语言执行 UI 自动化** 🚀
 
-[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/testflow/testflow)
+[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/swpucwf/test_agent)
 [![License](https://img.shields.io/badge/license-GNU%20GPL-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org)
 
-[快速开始](#-快速开始) · [功能特性](#-核心创新) · [文档](docs/) · [问题反馈](https://github.com/testflow/testflow/issues)
+[快速开始](#-快速开始) · [功能特性](#-核心创新) · [文档](docs/) · [问题反馈](https://github.com/swpucwf/test_agent/issues)
 
 </div>
 
@@ -295,8 +295,8 @@ docker restart <qdrant_container_id>
 
 欢迎 Star ⭐ / Fork 🍴 / PR 🔧
 
-- [提交 Bug](https://github.com/testflow/testflow/issues)
-- [功能建议](https://github.com/testflow/testflow/issues)
+- [提交 Bug](https://github.com/swpucwf/test_agent/issues)
+- [功能建议](https://github.com/swpucwf/test_agent/issues)
 - [贡献指南](CONTRIBUTING.md)
 
 ---
